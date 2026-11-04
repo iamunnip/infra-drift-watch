@@ -49,6 +49,13 @@ func (e *Engine) github(ctx context.Context, t config.Target, r drift.Result, re
 		status = "Resolved drift"
 	}
 	payload := map[string]any{"title": status + ": " + t.ID, "body": truncate(summary(t, r), 50000) + "\n" + Marker(t.ID), "state": "open"}
+	if r.Status == "clean" && config.Enabled(s.AutoClose) {
+		payload["state"] = "closed"
+		payload["state_reason"] = "completed"
+	}
+	if r.Status == "drift" {
+		payload["state_reason"] = "reopened"
+	}
 	if s.Labels != nil {
 		payload["labels"] = s.Labels
 	}
@@ -57,6 +64,7 @@ func (e *Engine) github(ctx context.Context, t config.Target, r drift.Result, re
 	}
 	if number == 0 {
 		delete(payload, "state")
+		delete(payload, "state_reason")
 		var created struct {
 			Number int `json:"number"`
 		}

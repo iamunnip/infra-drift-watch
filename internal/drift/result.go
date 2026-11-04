@@ -9,6 +9,7 @@ import (
 )
 
 type Finding struct {
+	Fields   []string `json:"fields,omitempty"`
 	Resource string   `json:"resource"`
 	Actions  []string `json:"actions"`
 }
@@ -29,6 +30,7 @@ func (r *Result) Normalize() {
 	}
 	for i := range r.Findings {
 		sort.Strings(r.Findings[i].Actions)
+		sort.Strings(r.Findings[i].Fields)
 	}
 	sort.Slice(r.Findings, func(i, j int) bool { return r.Findings[i].Resource < r.Findings[j].Resource })
 }

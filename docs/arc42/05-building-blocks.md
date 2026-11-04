@@ -11,7 +11,7 @@ flowchart TD
     Adapters --> Drift[drift model]
     App --> Report[report]
     App --> Delivery[delivery clients and coordinator]
-    Delivery --> State[state receipts]
+    Delivery --> State[state receipts and history]
 ```
 
 Configuration loading owns validation/override resolution. Adapters own comparison semantics. Delivery files separate HTTP, GitHub, Jira and coordination responsibilities without a plugin framework. State owns lock and atomic persistence.

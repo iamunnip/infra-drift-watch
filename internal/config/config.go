@@ -17,6 +17,7 @@ import (
 )
 
 type GitHub struct {
+	AutoClose  *bool    `yaml:"auto_close"`
 	Enabled    *bool    `yaml:"enabled"`
 	Repository string   `yaml:"repository"`
 	TokenEnv   string   `yaml:"token_env"`
@@ -30,23 +31,33 @@ type Slack struct {
 	Repeat     string `yaml:"repeat"`
 }
 type Jira struct {
-	Enabled   *bool  `yaml:"enabled"`
-	URL       string `yaml:"url"`
-	Project   string `yaml:"project"`
-	IssueType string `yaml:"issue_type"`
-	EmailEnv  string `yaml:"email_env"`
-	TokenEnv  string `yaml:"token_env"`
+	AutoClose         *bool          `yaml:"auto_close"`
+	ResolveTransition string         `yaml:"resolve_transition"`
+	ReopenTransition  string         `yaml:"reopen_transition"`
+	ResolveFields     map[string]any `yaml:"resolve_fields"`
+	ReopenFields      map[string]any `yaml:"reopen_fields"`
+	Enabled           *bool          `yaml:"enabled"`
+	URL               string         `yaml:"url"`
+	Project           string         `yaml:"project"`
+	IssueType         string         `yaml:"issue_type"`
+	EmailEnv          string         `yaml:"email_env"`
+	TokenEnv          string         `yaml:"token_env"`
 	// Fields supports installation-specific custom fields on creation.
 	Fields map[string]any `yaml:"fields"`
 }
+type History struct {
+	Enabled *bool `yaml:"enabled"`
+	Limit   *int  `yaml:"limit"`
+}
 type Settings struct {
-	Timeout     string `yaml:"timeout"`
-	HTTPTimeout string `yaml:"http_timeout"`
-	Retries     *int   `yaml:"retries"`
-	Executable  string `yaml:"executable"`
-	GitHub      GitHub `yaml:"github"`
-	Slack       Slack  `yaml:"slack"`
-	Jira        Jira   `yaml:"jira"`
+	History     History `yaml:"history"`
+	Timeout     string  `yaml:"timeout"`
+	HTTPTimeout string  `yaml:"http_timeout"`
+	Retries     *int    `yaml:"retries"`
+	Executable  string  `yaml:"executable"`
+	GitHub      GitHub  `yaml:"github"`
+	Slack       Slack   `yaml:"slack"`
+	Jira        Jira    `yaml:"jira"`
 }
 type Suppression struct {
 	Resource string `yaml:"resource"`
@@ -110,7 +121,8 @@ func merge(dst, src reflect.Value) {
 }
 func Parse(global, inventory io.Reader) (Config, error) {
 	retries := 2
-	c := Config{File: File{StateDir: ".state", Format: "terminal", Defaults: Settings{Timeout: "5m", HTTPTimeout: "30s", Retries: &retries, GitHub: GitHub{APIURL: "https://api.github.com", TokenEnv: "GITHUB_TOKEN"}, Slack: Slack{WebhookEnv: "SLACK_WEBHOOK_URL", Repeat: "24h"}, Jira: Jira{IssueType: "Task", EmailEnv: "JIRA_EMAIL", TokenEnv: "JIRA_TOKEN"}}}}
+	historyEnabled, historyLimit := true, 100
+	c := Config{File: File{StateDir: ".state", Format: "terminal", Defaults: Settings{History: History{Enabled: &historyEnabled, Limit: &historyLimit}, Timeout: "5m", HTTPTimeout: "30s", Retries: &retries, GitHub: GitHub{APIURL: "https://api.github.com", TokenEnv: "GITHUB_TOKEN"}, Slack: Slack{WebhookEnv: "SLACK_WEBHOOK_URL", Repeat: "24h"}, Jira: Jira{IssueType: "Task", EmailEnv: "JIRA_EMAIL", TokenEnv: "JIRA_TOKEN"}}}}
 	var raw File
 	if err := decode(global, &raw); err != nil {
 		return c, err
@@ -159,6 +171,12 @@ func Parse(global, inventory io.Reader) (Config, error) {
 		}
 		if *settings.Retries < 0 || *settings.Retries > 5 {
 			return c, errors.New("retries must be between 0 and 5")
+		}
+		if *settings.History.Limit < 1 || *settings.History.Limit > 10000 {
+			return c, errors.New("history limit must be between 1 and 10000")
+		}
+		if Enabled(settings.Jira.AutoClose) && (settings.Jira.ResolveTransition == "" || settings.Jira.ReopenTransition == "") {
+			return c, errors.New("Jira auto_close requires resolve_transition and reopen_transition IDs")
 		}
 		if Enabled(settings.GitHub.Enabled) {
 			if !regexp.MustCompile(`^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$`).MatchString(settings.GitHub.Repository) {

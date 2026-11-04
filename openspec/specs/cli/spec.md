@@ -7,7 +7,7 @@ CLI entry point. Define testable behavior, safe failure handling, and documented
 ## Requirements
 
 ### Requirement: Discover commands
-The CLI SHALL expose help, version, validate and scan commands.
+The CLI SHALL expose help, version, validate, scan and history commands.
 
 #### Scenario: Request help
 - **WHEN** the user invokes --help
@@ -28,7 +28,7 @@ The scan command SHALL return 0 for clean, 2 for drift, and 1 for failure or inc
 - **THEN** the report preserves both results and exit code is 1
 
 ### Requirement: Dry run
-The scan command SHALL skip all delivery requests and receipt writes when --dry-run is supplied.
+The scan command SHALL skip all delivery requests and receipt and history writes when --dry-run is supplied.
 
 #### Scenario: Inspect without delivery
 - **WHEN** a user runs scan --dry-run

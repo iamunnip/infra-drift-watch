@@ -2,11 +2,15 @@
 state_dir: ../.state
 format: terminal
 defaults:
+  history:
+    enabled: true
+    limit: 100
   timeout: 5m
   http_timeout: 30s
   retries: 2
   github:
     enabled: false
+    auto_close: false
     repository: iamunnip/infra-drift-watch
     token_env: GITHUB_TOKEN
     api_url: https://api.github.com
@@ -17,6 +21,8 @@ defaults:
     repeat: 24h
   jira:
     enabled: false
+    auto_close: false
+    # Enabling auto_close requires your workflow resolve_transition/reopen_transition IDs.
     url: https://example.atlassian.net
     project: INFRA
     issue_type: Task

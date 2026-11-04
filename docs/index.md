@@ -3,6 +3,7 @@
 - [First run](diataxis/tutorials/first-run.md)
 - [Development](diataxis/how-to/develop.md)
 - [AWS scans](diataxis/how-to/scan-aws.md)
+- [Scan history](diataxis/how-to/inspect-history.md)
 - [Delivery setup](diataxis/how-to/configure-delivery.md)
 - [GitHub Actions](diataxis/how-to/github-actions.md)
 - [Configuration](diataxis/reference/configuration.md)
