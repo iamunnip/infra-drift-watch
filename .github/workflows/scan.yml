@@ -53,7 +53,7 @@ jobs:
         run: |
           export PATH="$GITHUB_WORKSPACE/.tools/bin:$PATH"
           set +e
-          bin/infra-drift-watch scan --config "$CONFIG_PATH" --inventory "$INVENTORY_PATH" --state-dir .state --format json > report.json
+          bin/infra-drift-watch scan --config "$CONFIG_PATH" --inventory "$INVENTORY_PATH" --state-dir .state --aws-profile "" --aws-region "$AWS_REGION" --format json > report.json
           code=$?
           echo "exit_code=$code" >> "$GITHUB_OUTPUT"
           exit 0

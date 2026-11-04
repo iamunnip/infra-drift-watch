@@ -50,3 +50,10 @@ latest tags at execution time.
 The cached state directory now includes bounded scan history as well as receipts.
 Set history.limit per target to control retention. Cache loss can remove both; use
 stronger persistent storage when historical records must be retained reliably.
+
+The scheduled AWS job passes --aws-profile "" and --aws-region "$AWS_REGION"
+explicitly. This clears a local default-profile setting inherited from YAML while
+preserving the temporary OIDC credential environment established by the AWS action.
+Its configured region therefore applies to scans as well as workspace initialization.
+For a different credential model, configure profile/region deliberately rather
+than committing static credentials to inventory or global configuration.

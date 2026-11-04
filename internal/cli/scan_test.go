@@ -35,3 +35,24 @@ func TestScanInvalidTargetSelection(t *testing.T) {
 		t.Fatalf("code=%d err=%s", code, &err)
 	}
 }
+
+func TestValidateAWSCLISelectorsWithoutCredentials(t *testing.T) {
+	dir := t.TempDir()
+	global := filepath.Join(dir, "config.yaml")
+	inventory := filepath.Join(dir, "inventory.yaml")
+	os.WriteFile(global, []byte("{}"), 0600)
+	os.WriteFile(inventory, []byte("targets:\n - {id: aws, adapter: opentofu, path: .}"), 0600)
+	for _, tt := range []struct {
+		profile, region string
+		code            int
+	}{{"default", "us-east-1", 0}, {"", "ap-south-1", 0}, {"default", "invalid", 1}} {
+		var out, errOut bytes.Buffer
+		got := Run([]string{"validate", "--config", global, "--inventory", inventory, "--aws-profile", tt.profile, "--aws-region", tt.region}, &out, &errOut)
+		if got != tt.code {
+			t.Fatalf("code=%d want=%d stderr=%s", got, tt.code, &errOut)
+		}
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".state")); !os.IsNotExist(err) {
+		t.Fatal("validation wrote state")
+	}
+}

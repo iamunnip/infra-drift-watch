@@ -11,7 +11,7 @@ terraform {
 
 variable "region" {
   type    = string
-  default = "us-east-1"
+  default = null
 }
 
 variable "bucket_name" {

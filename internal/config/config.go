@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -49,7 +50,15 @@ type History struct {
 	Enabled *bool `yaml:"enabled"`
 	Limit   *int  `yaml:"limit"`
 }
+
+// AWS settings are selectors only. Credentials remain in the normal SDK chain.
+// Nil inherits the parent environment; explicit empty strings clear its selectors.
+type AWS struct {
+	Profile *string `yaml:"profile"`
+	Region  *string `yaml:"region"`
+}
 type Settings struct {
+	AWS         AWS     `yaml:"aws"`
 	History     History `yaml:"history"`
 	Timeout     string  `yaml:"timeout"`
 	HTTPTimeout string  `yaml:"http_timeout"`
@@ -148,6 +157,9 @@ func Parse(global, inventory io.Reader) (Config, error) {
 		settings := c.Defaults
 		merge(reflect.ValueOf(&settings).Elem(), reflect.ValueOf(t.Settings))
 		t.Settings = settings
+		if err := ValidateAWS(settings.AWS); err != nil {
+			return c, fmt.Errorf("target %s: %w", t.ID, err)
+		}
 		if t.Adapter != "opentofu" && t.Adapter != "terraform" && t.Adapter != "kubernetes" {
 			return c, fmt.Errorf("target %s: unsupported adapter", t.ID)
 		}
@@ -266,6 +278,20 @@ func ValidateSecrets(targets []Target) error {
 		if Enabled(s.Slack.Enabled) && secureURL(os.Getenv(s.Slack.WebhookEnv)) != nil {
 			return errors.New("Slack webhook must be a valid HTTPS URL")
 		}
+	}
+	return nil
+}
+
+// ValidateAWS checks selector syntax without reading credentials or contacting AWS.
+func ValidateAWS(settings AWS) error {
+	if settings.Profile != nil {
+		value := *settings.Profile
+		if strings.TrimSpace(value) != value || strings.IndexFunc(value, unicode.IsControl) >= 0 {
+			return errors.New("aws.profile must not contain control characters or surrounding whitespace")
+		}
+	}
+	if settings.Region != nil && *settings.Region != "" && !regexp.MustCompile(`^[a-z]{2,}(-[a-z0-9]+)+-[0-9]+$`).MatchString(*settings.Region) {
+		return errors.New("aws.region must be an AWS region identifier")
 	}
 	return nil
 }

@@ -16,6 +16,8 @@ infra-drift-watch history [--state-dir .state] [--target ID] [--limit 20] [--for
 | --format | Inherit config; terminal or json |
 | --timeout | Inherit settings; positive duration |
 | --state-dir | Inherit config; explicit flag resolves from current directory |
+| --aws-profile | Override selected targets; `default` uses your shared default profile, empty clears inherited profile selection |
+| --aws-region | Override selected targets; e.g. us-east-1, empty clears inherited region selection |
 | --dry-run | False; scan infrastructure but skip delivery, receipt and history writes |
 
 Flags follow the subcommand. Validate checks file structure, settings, and target

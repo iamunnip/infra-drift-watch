@@ -15,6 +15,8 @@ are errors. No environment substitution is performed inside YAML strings.
 
 | Key | Default / behavior |
 | --- | --- |
+| aws.profile | Omitted inherits runtime AWS selection; `default` selects your shared default profile; explicit empty clears inherited profile selectors |
+| aws.region | Omitted inherits runtime AWS region; e.g. `us-east-1`; explicit empty clears inherited region selectors |
 | timeout | `5m`, positive per-target tool budget |
 | http_timeout | `30s`, positive total budget per destination including retries |
 | retries | `2`, range 0–5; explicit 429 responses, or GET 5xx only |
@@ -46,7 +48,8 @@ are errors. No environment substitution is performed inside YAML strings.
 
 Nonempty scalars override inherited values. Explicit booleans and retry zero
 are respected. Nested settings merge field by field. Lists/maps replace entirely;
-`[]` or `{}` clears inherited collections. Null and empty strings inherit.
+`[]` or `{}` clears inherited collections. Null and ordinary empty strings inherit. AWS profile/region are the exception:
+an explicit empty string clears the selection, while omission or null inherits.
 Closure remains manual unless explicitly enabled. Jira transition destinations
 are checked against done (resolution) or non-done (recurrence) status categories.
 
@@ -80,3 +83,18 @@ resolution merely because an exception hid remaining drift.
 Targets scan serially; delivery is also serial. Timeouts and retry counts are
 configurable; concurrency is intentionally one in this release. Raw values,
 arbitrary shell hooks, automatic remediation, and unsafe TLS are not options.
+
+## AWS selector precedence
+
+Built-in AWS selectors are unspecified. Global defaults merge into target settings;
+explicit CLI --aws-profile/--aws-region overrides then apply to selected targets.
+Profile and region are scoped to tool subprocesses. Profile populates AWS_PROFILE
+and AWS_DEFAULT_PROFILE; region populates AWS_REGION and AWS_DEFAULT_REGION.
+The parent environment and existing credential variables are never rewritten.
+Kubernetes credential plugins inherit these selectors too, which supports EKS.
+
+AWS credentials are not accepted in this configuration. Shared profiles, SSO,
+environment credentials, web identity and role providers remain the responsibility
+of the invoked tool's AWS SDK. Explicit provider/backend configuration can take
+precedence over environment selectors. Validation checks selector syntax only;
+it does not inspect credentials, verify a profile exists, or contact AWS.
