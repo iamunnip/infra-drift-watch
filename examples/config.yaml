@@ -1,0 +1,24 @@
+# Paths here are relative to this file. No delivery is enabled in this example.
+state_dir: ../.state
+format: terminal
+defaults:
+  timeout: 5m
+  http_timeout: 30s
+  retries: 2
+  github:
+    enabled: false
+    repository: iamunnip/infra-drift-watch
+    token_env: GITHUB_TOKEN
+    api_url: https://api.github.com
+    labels: [drift]
+  slack:
+    enabled: false
+    webhook_env: SLACK_WEBHOOK_URL
+    repeat: 24h
+  jira:
+    enabled: false
+    url: https://example.atlassian.net
+    project: INFRA
+    issue_type: Task
+    email_env: JIRA_EMAIL
+    token_env: JIRA_TOKEN

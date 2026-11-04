@@ -1,0 +1,14 @@
+# Documentation
+
+- [First run](diataxis/tutorials/first-run.md)
+- [Development](diataxis/how-to/develop.md)
+- [AWS scans](diataxis/how-to/scan-aws.md)
+- [Delivery setup](diataxis/how-to/configure-delivery.md)
+- [GitHub Actions](diataxis/how-to/github-actions.md)
+- [Configuration](diataxis/reference/configuration.md)
+- [CLI and reports](diataxis/reference/cli.md)
+- [Verification and compatibility](diataxis/reference/verification.md)
+- [Original project intake](diataxis/explanation/project-intake.md)
+- [Architecture](arc42/index.md)
+- [Decisions](adr/index.md)
+- [Domain knowledge](../knowledge/index.md)

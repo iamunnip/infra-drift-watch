@@ -1,0 +1,32 @@
+name: Release binaries
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require release commit on main
+        run: git merge-base --is-ancestor HEAD origin/main
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.3'
+          cache: true
+      - run: make check
+      - name: Build Linux binaries
+        run: |
+          mkdir -p dist
+          for arch in amd64 arm64; do
+            GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -trimpath -ldflags "-X github.com/iamunnip/infra-drift-watch/internal/cli.Version=${GITHUB_REF_NAME}" -o "dist/infra-drift-watch-linux-$arch" ./cmd/infra-drift-watch
+          done
+          cd dist
+          sha256sum infra-drift-watch-* > SHA256SUMS
+      - name: Publish release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --draft --generate-notes

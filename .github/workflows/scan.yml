@@ -1,0 +1,74 @@
+name: Scheduled drift scan
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *' # UTC; opt-in using DRIFT_SCAN_ENABLED
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+concurrency:
+  group: drift-scan
+  cancel-in-progress: false
+jobs:
+  scan:
+    if: vars.DRIFT_SCAN_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GITHUB_TOKEN: ${{ secrets.DRIFT_GITHUB_TOKEN || github.token }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+      JIRA_TOKEN: ${{ secrets.JIRA_TOKEN }}
+      CONFIG_PATH: ${{ vars.DRIFT_CONFIG_PATH }}
+      INVENTORY_PATH: ${{ vars.DRIFT_INVENTORY_PATH }}
+      INIT_PATH: ${{ vars.DRIFT_INIT_PATH }}
+      TF_VAR_bucket_name: ${{ vars.DRIFT_AWS_BUCKET_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require deployment settings
+        run: |
+          test -n "$CONFIG_PATH"
+          test -n "$INVENTORY_PATH"
+          test -n "$INIT_PATH"
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.27.3'
+          cache: true
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.DRIFT_AWS_ROLE_ARN }}
+          aws-region: ${{ vars.DRIFT_AWS_REGION || 'us-east-1' }}
+      - run: make tools build
+      - name: Restore delivery receipts
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: drift-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: drift-state-${{ github.ref_name }}-
+      - name: Initialize existing AWS workspace
+        run: .tools/bin/tofu -chdir="$INIT_PATH" init -input=false
+      - name: Scan and deliver
+        id: scan
+        run: |
+          export PATH="$GITHUB_WORKSPACE/.tools/bin:$PATH"
+          set +e
+          bin/infra-drift-watch scan --config "$CONFIG_PATH" --inventory "$INVENTORY_PATH" --state-dir .state --format json > report.json
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Save delivery receipts
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: drift-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: drift-report
+          path: report.json
+          retention-days: 14
+      - name: Fail on scan or delivery errors
+        if: steps.scan.outputs.exit_code != '0' && steps.scan.outputs.exit_code != '2'
+        run: exit 1

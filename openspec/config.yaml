@@ -1,0 +1,9 @@
+schema: spec-driven
+context: |
+  Go CLI with no initial UI. Development targets develop. Use TDD.
+  Never apply infrastructure changes or expose secrets.
+  Distinguish observed drift, pending configuration changes, and incomplete scans.
+rules:
+  tasks:
+    - Include a failing behavioral test before implementation.
+    - Include relevant documentation and verification.

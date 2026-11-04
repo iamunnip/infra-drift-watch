@@ -1,0 +1,6 @@
+targets:
+  - id: kubernetes-demo
+    adapter: kubernetes
+    context: kind-infra-drift-watch
+    namespace: default
+    manifests: [configmap.yaml]
