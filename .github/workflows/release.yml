@@ -33,8 +33,9 @@ jobs:
           for arch in amd64 arm64; do
             GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -trimpath -ldflags "-X github.com/iamunnip/infra-drift-watch/internal/cli.Version=${RELEASE_TAG}" -o "dist/infra-drift-watch-linux-$arch" ./cmd/infra-drift-watch
           done
+          tar -czf dist/third-party-notices.tar.gz LICENSE THIRD_PARTY_NOTICES.md licenses
           cd dist
-          sha256sum infra-drift-watch-* > SHA256SUMS
+          sha256sum infra-drift-watch-* third-party-notices.tar.gz > SHA256SUMS
       - name: Publish draft release artifacts
         env:
           GH_TOKEN: ${{ github.token }}

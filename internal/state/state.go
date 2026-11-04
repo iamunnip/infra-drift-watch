@@ -11,14 +11,16 @@ import (
 )
 
 type Entry struct {
+	Policy      string    `json:"policy,omitempty"`
 	Link        string    `json:"link,omitempty"`
 	Fingerprint string    `json:"fingerprint"`
 	Active      bool      `json:"active"`
 	Updated     time.Time `json:"updated"`
 }
 type Store struct {
-	Entries map[string]Entry `json:"entries"`
-	Version int              `json:"version"`
+	History map[string][]Record `json:"history,omitempty"`
+	Entries map[string]Entry    `json:"entries"`
+	Version int                 `json:"version"`
 	dir     string
 	lock    *os.File
 }
@@ -35,16 +37,20 @@ func Open(dir string) (*Store, error) {
 		f.Close()
 		return nil, errors.New("state directory already has a writer")
 	}
-	s := &Store{Entries: map[string]Entry{}, Version: 1, dir: dir, lock: f}
+	s := &Store{Entries: map[string]Entry{}, Version: 2, History: map[string][]Record{}, dir: dir, lock: f}
 	b, e := os.ReadFile(filepath.Join(dir, "receipts.json"))
 	if e == nil {
-		if json.Unmarshal(b, s) != nil || s.Version != 1 || s.Entries == nil {
+		if json.Unmarshal(b, s) != nil || (s.Version != 1 && s.Version != 2) || s.Entries == nil {
 			s.Close()
 			return nil, errors.New("invalid or unsupported state file")
 		}
 	} else if !os.IsNotExist(e) {
 		s.Close()
 		return nil, errors.New("cannot read state file")
+	}
+	s.Version = 2
+	if s.History == nil {
+		s.History = map[string][]Record{}
 	}
 	return s, nil
 }

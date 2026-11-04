@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -67,6 +68,9 @@ func TestDisposableKubernetes(t *testing.T) {
 		t.Fatalf("expected drift: %+v; kubectl diagnostic: %s", r, out)
 	}
 	first := (adapters.Scanner{}).Scan(ctx, target)
+	if len(first.Findings) != 1 || first.Findings[0].Resource != "v1/ConfigMap/default/drift-demo" || !slices.Contains(first.Findings[0].Fields, "/data/greeting") {
+		t.Fatalf("resource/field detail missing: %+v", first)
+	}
 	second := (adapters.Scanner{}).Scan(ctx, target)
 	if first.Fingerprint() != second.Fingerprint() {
 		t.Fatalf("unchanged drift fingerprint changed: %s vs %s", first.Fingerprint(), second.Fingerprint())

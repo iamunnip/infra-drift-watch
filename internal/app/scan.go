@@ -77,10 +77,16 @@ func Scan(ctx context.Context, o Options, out io.Writer) (int, error) {
 		s := t.Settings
 		enabled = enabled || config.Enabled(s.GitHub.Enabled) || config.Enabled(s.Slack.Enabled) || config.Enabled(s.Jira.Enabled)
 	}
+	historyEnabled := false
+	for _, t := range c.Targets {
+		historyEnabled = historyEnabled || config.Enabled(t.Settings.History.Enabled)
+	}
 	if !o.DryRun && enabled {
 		if e = config.ValidateSecrets(c.Targets); e != nil {
 			return 1, e
 		}
+	}
+	if !o.DryRun && (enabled || historyEnabled) {
 		store, e = state.Open(c.StateDir)
 		if e != nil {
 			return 1, e
@@ -91,22 +97,33 @@ func Scan(ctx context.Context, o Options, out io.Writer) (int, error) {
 	r := report.Report{SchemaVersion: "1", Started: time.Now().UTC(), Results: []drift.Result{}, DeliveryErrors: []string{}}
 	code := 0
 	for _, t := range c.Targets {
+		started := time.Now().UTC()
+		var result drift.Result
 		if ctx.Err() != nil {
-			code = 1
-			r.Results = append(r.Results, drift.Result{Target: t.ID, Adapter: t.Adapter, Status: "incomplete", Findings: []drift.Finding{}, Error: "scan cancelled"})
-			continue
+			result = drift.Result{Target: t.ID, Adapter: t.Adapter, Status: "incomplete", Findings: []drift.Finding{}, Error: "scan cancelled"}
+		} else {
+			result = (adapters.Scanner{}).Scan(ctx, t)
 		}
-		result := (adapters.Scanner{}).Scan(ctx, t)
+		duration := time.Since(started).Milliseconds()
 		if result.Status == "failed" || result.Status == "incomplete" {
 			code = 1
 		} else if result.Status == "drift" && code == 0 {
 			code = 2
 		}
 		r.Results = append(r.Results, result)
+		deliveryErrors := []string{}
 		if !o.DryRun && enabled {
 			if e = engine.Deliver(ctx, t, result); e != nil {
 				code = 1
+				deliveryErrors = append(deliveryErrors, e.Error())
 				r.DeliveryErrors = append(r.DeliveryErrors, fmt.Sprintf("target %s: %s", t.ID, e))
+			}
+		}
+		if !o.DryRun && config.Enabled(t.Settings.History.Enabled) {
+			record := state.Record{At: started, DurationMS: duration, Result: result, DeliveryErrors: deliveryErrors}
+			if e = store.Record(record, *t.Settings.History.Limit); e != nil {
+				code = 1
+				r.HistoryErrors = append(r.HistoryErrors, fmt.Sprintf("target %s: cannot save scan history", t.ID))
 			}
 		}
 	}

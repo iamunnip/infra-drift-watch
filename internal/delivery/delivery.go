@@ -3,6 +3,7 @@ package delivery
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -38,8 +39,11 @@ func summary(t config.Target, r drift.Result) string {
 	}
 	for _, f := range r.Findings {
 		fmt.Fprintf(&b, "- %s: %s\n", safe(f.Resource), strings.Join(f.Actions, ", "))
+		for _, field := range f.Fields {
+			fmt.Fprintf(&b, "  field: %s\n", safe(field))
+		}
 	}
-	b.WriteString("\nValues are omitted. Resolution describes the successfully scanned scope; issue closure remains manual.\n")
+	b.WriteString("\nValues are omitted. Resolution describes the successfully scanned scope; issue status follows the configured tracker policy.\n")
 	return b.String()
 }
 
@@ -108,14 +112,18 @@ func (e *Engine) Deliver(ctx context.Context, t config.Target, r drift.Result) e
 		}
 		key := drift.Hash(t.ID + "\x00" + d.name + "\x00" + d.identity)
 		entry := e.Store.Entries[key]
+		policy := deliveryPolicy(t, d.name)
+		wantsClosure := d.name == "github" && config.Enabled(s.GitHub.AutoClose) || d.name == "jira" && config.Enabled(s.Jira.AutoClose)
+		samePolicy := entry.Policy == policy || entry.Policy == "" && !wantsClosure
 		if entry.Link != "" {
 			e.links[d.name] = entry.Link
 		}
-		if r.Status == "clean" && !entry.Active {
+		closurePolicyChanged := wantsClosure && entry.Link != "" && !samePolicy
+		if r.Status == "clean" && !entry.Active && !closurePolicyChanged {
 			continue
 		}
 		reminderDue := r.Status == "drift" && d.repeat > 0 && now.Sub(entry.Updated) >= d.repeat
-		if entry.Fingerprint == fingerprint && !reminderDue {
+		if entry.Fingerprint == fingerprint && samePolicy && !reminderDue {
 			continue
 		}
 		sendCtx, cancel := context.WithTimeout(ctx, timeout)
@@ -126,7 +134,7 @@ func (e *Engine) Deliver(ctx context.Context, t config.Target, r drift.Result) e
 			continue
 		}
 		old, had := e.Store.Entries[key]
-		e.Store.Entries[key] = state.Entry{Fingerprint: fingerprint, Active: r.Status == "drift", Updated: now, Link: e.links[d.name]}
+		e.Store.Entries[key] = state.Entry{Fingerprint: fingerprint, Policy: policy, Active: r.Status == "drift", Updated: now, Link: e.links[d.name]}
 		if err = e.Store.Save(); err != nil {
 			if had {
 				e.Store.Entries[key] = old
@@ -143,4 +151,23 @@ func truncate(s string, n int) string {
 		return s[:n] + "\n[truncated]"
 	}
 	return s
+}
+
+// deliveryPolicy lets explicit policy/metadata changes update an existing finding.
+// Missing legacy policy hashes retain default behavior without duplicate reminders.
+func deliveryPolicy(t config.Target, destination string) string {
+	var settings any
+	switch destination {
+	case "github":
+		settings = t.Settings.GitHub
+	case "jira":
+		settings = t.Settings.Jira
+	case "slack":
+		settings = t.Settings.Slack
+	}
+	data, _ := json.Marshal(struct {
+		Owner, Environment string
+		Settings           any
+	}{t.Owner, t.Environment, settings})
+	return drift.Hash(string(data))
 }

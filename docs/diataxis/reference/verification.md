@@ -67,3 +67,20 @@ Mermaid, separate docs/knowledge checks, and golangci-lint 2.15.0 in a read-only
 container passed; govulncheck reported no vulnerabilities. npm dependency refresh
 reported no vulnerabilities and no newer compatible Mermaid/jsdom versions.
 No host tool installers were run for this update. Domain knowledge did not change.
+
+License texts and notice paths are documented in [third-party notices](../../../THIRD_PARTY_NOTICES.md).
+Runtime images and manual release archives include the named component licenses.
+
+Feature verification adds resource/field identity and fingerprint checks on real
+Kubernetes diffs; history retention, version-1 migration, read-only CLI, failure
+records and dry-run preservation; and mocked GitHub/Jira closure, recurrence,
+policy-change reconciliation and unavailable-transition retries. State format 2
+preserves old receipts; public scan/history JSON schemas remain version 1.
+
+The completed feature checks also cover unavailable Jira transitions, fresh issue
+status instead of stale search status, closure-policy changes, manifest-set
+suppression compatibility, and oversized process output rejection. All local Go
+checks pass, the container linter reports zero issues, and the updated image can
+read history with no network, inventory, credentials or writable mounts. Six
+Mermaid diagrams and seven OpenSpec capabilities validate. Live AWS/destination
+verification still needs deployment configuration; no live services were exercised.

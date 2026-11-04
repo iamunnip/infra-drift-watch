@@ -46,3 +46,7 @@ version tag on main. The workflow validates the tag and creates a draft release;
 pushing a tag alone triggers nothing. Dependabot submits weekly dependency updates
 targeting develop. Pin upgrades are reviewed and tested rather than using floating
 latest tags at execution time.
+
+The cached state directory now includes bounded scan history as well as receipts.
+Set history.limit per target to control retention. Cache loss can remove both; use
+stronger persistent storage when historical records must be retained reliably.

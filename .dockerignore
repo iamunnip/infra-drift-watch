@@ -8,4 +8,6 @@
 !scripts/
 !scripts/install-tools.sh
 !LICENSE
-!THIRD_PARTY.md
+!THIRD_PARTY_NOTICES.md
+!licenses/
+!licenses/**

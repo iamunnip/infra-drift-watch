@@ -1,7 +1,7 @@
 # infra-drift-watch
 
 A Go CLI that detects infrastructure drift and reports it through terminal/JSON
-output, GitHub issues, Slack, and optional Jira. MIT licensed; no web UI.
+output, GitHub issues, Slack, and optional Jira. Original project code is MIT licensed; no web UI.
 
 **Status: initial implementation, not a production release.** OpenTofu and
 Terraform refresh-only scanning and Kubernetes manifest comparison are implemented.
@@ -14,14 +14,17 @@ cloud credentials. See [verification](docs/diataxis/reference/verification.md).
 - OpenTofu/Terraform: observed changes relative to recorded state, separated from
   pending configuration changes. Workspaces must already be initialized.
 - Kubernetes: server-side `kubectl diff` for explicitly supplied local manifests.
-  Findings are grouped as `manifest-set`; ownership conflicts are scan failures.
+  Findings identify changed resources and field paths without values; ownership
+  conflicts are scan failures. Unknown diff formats retain a manifest-set fallback.
 - Terminal and schema-versioned JSON reports with values omitted.
 - One GitHub issue per target, updated when drift changes; optional Jira Cloud.
 - Slack notifications with available issue links, repeat interval, and independent receipts.
-- Resolution updates and notifications; issues are never automatically closed.
+- Resolution updates and notifications; optional GitHub/Jira closure is disabled
+  by default and can be overridden per target. Recurring drift reopens configured trackers.
 - Exact-resource, expiring suppressions. Suppression makes coverage incomplete
   and prevents automatic resolution or delivery for that target.
-- Single-writer local delivery state, non-root Docker image, opt-in GitHub Actions schedule.
+- Single-writer receipts and bounded scan history, non-root Docker image, opt-in
+  GitHub Actions schedule. The history command reads past scans without credentials.
 
 The scanner never applies infrastructure changes or persists refreshed IaC state.
 Planning may acquire backend locks. Kubernetes server-side dry-run can invoke
@@ -60,7 +63,7 @@ when validated. Follow the [AWS guide](docs/diataxis/how-to/scan-aws.md).
 ```
 
 Dry-run still inspects live infrastructure. It skips all destination calls and
-local receipt writes. Delivery is disabled in the supplied example configuration.
+local receipt and history writes. Delivery is disabled in the supplied example configuration.
 
 | Exit | Meaning |
 | --- | --- |
@@ -88,6 +91,23 @@ See [all settings](docs/diataxis/reference/configuration.md),
 Unknown keys, duplicate IDs, invalid durations, and unsafe API URLs are rejected.
 Credentials are referenced by environment-variable name, never stored in YAML.
 
+## Scan history and issue closure
+
+Normal scans keep the latest 100 records per target by default, including failures,
+coverage, value-free findings, inspection duration, and delivery errors. Configure
+history.enabled/history.limit globally or per target. Dry-run writes nothing.
+
+```sh
+bin/infra-drift-watch history --state-dir .state --target aws-demo --limit 20
+bin/infra-drift-watch history --state-dir .state --format json
+```
+
+GitHub auto_close and Jira auto_close are false by default. Jira closure also needs
+project-specific resolve/reopen transition IDs; unavailable or wrong-category
+transitions fail delivery without acknowledging resolution. Failed, incomplete,
+or suppressed scans never close issues. See the [history guide](docs/diataxis/how-to/inspect-history.md)
+and [delivery setup](docs/diataxis/how-to/configure-delivery.md).
+
 ## Architecture
 
 ```mermaid
@@ -100,7 +120,7 @@ flowchart LR
     Delivery --> GitHub[GitHub Issues]
     Delivery --> Jira[Jira Cloud optional]
     Delivery --> Slack[Slack webhook]
-    Delivery --> State[Locked local receipts]
+    Delivery --> State[Locked receipts and scan history]
 ```
 
 [arc42 architecture](docs/arc42/index.md) contains C4 context/building-block views
@@ -120,7 +140,10 @@ initialized workspace with the access required for backend locks and provider
 execution, mount a writable state directory at `/state`, and use `--state-dir /state`.
 Supply credentials at runtime. Kubernetes needs a mounted kubeconfig and any
 credential plugin it references. Plan creation needs a writable temporary directory.
-Never bake secrets into images. [Bundled tools retain their upstream licenses](THIRD_PARTY.md).
+Never bake secrets into images. [Third-party notices](THIRD_PARTY_NOTICES.md)
+and license texts are included in the image. OpenTofu uses MPL-2.0; the bundled
+Terraform release uses BSL-1.1 and its additional use grant. The image's components
+are not all covered by the application's MIT license.
 
 ## GitHub Actions
 
@@ -175,7 +198,7 @@ can be overridden with GOVULNCHECK, ACTIONLINT, GOLANGCI_LINT, and OPENSPEC.
 vulnerability checks, and tool integration are separate CI steps with explicit
 prerequisites. No live cloud or notifications are needed for normal tests.
 
-## Documentation and next work
+## Documentation and deployment readiness
 
 - [Documentation index](docs/index.md): Diátaxis guides and reference.
 - [Knowledge](knowledge/index.md): indexed OKF domain concepts and policies.
@@ -184,9 +207,10 @@ prerequisites. No live cloud or notifications are needed for normal tests.
 
 Before a production release: verify AWS backend/permissions and real destinations,
 confirm supported tool versions in your environment, and choose stronger state
-retention if notification duplicates are unacceptable. Future features can include
-per-field Kubernetes findings, richer history, and configurable issue closure.
-There is no persistent daemon, distributed locking, or exactly-once delivery.
+retention if notification duplicates or lost local history are unacceptable.
+The planned CLI, resource/field details, history, and optional closure features are
+implemented. A web UI, persistent daemon, distributed locking, and exactly-once
+delivery are outside the current scope.
 
 ## Security and license
 
@@ -194,4 +218,8 @@ Reports omit values; ephemeral plan files use a private directory and are remove
 on normal exits. Tool errors are summarized rather than exposing raw stderr.
 Process crashes may leave temporary artifacts; use isolated runners and temporary storage.
 Resource names, owners, and environment labels are still operational metadata.
-See [security reporting](SECURITY.md) and [MIT license](LICENSE).
+The project's original code is [MIT licensed](LICENSE). OpenTofu, Terraform,
+providers, linked libraries, and OS packages retain separate terms. See
+[third-party notices](THIRD_PARTY_NOTICES.md), the
+[license comparison](docs/diataxis/explanation/licensing.md), and
+[security reporting](SECURITY.md). Manual releases include a license/notices archive.

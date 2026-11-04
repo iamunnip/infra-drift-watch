@@ -10,7 +10,7 @@ sequenceDiagram
     participant Delivery
     participant State
     CLI->>App: Scan selected inventory
-    App->>State: Lock receipts if delivery enabled
+    App->>State: Lock state if delivery or history enabled
     App->>Tool: Inspect under timeout
     Tool-->>App: Result and coverage
     alt Complete clean or drift result
@@ -19,7 +19,8 @@ sequenceDiagram
     else Failed or incomplete
         App->>App: Preserve unresolved findings
     end
+    App->>State: Save bounded scan record if enabled
     App-->>CLI: Report and exit code
 ```
 
-Explicit dry-run skips delivery, credential preflight and receipt writes, but still inspects infrastructure.
+Explicit dry-run skips delivery, credential preflight and receipt and history writes, but still inspects infrastructure.

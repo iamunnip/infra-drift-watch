@@ -20,6 +20,18 @@ Only a successful complete scan can establish resolution in selected scope. Fail
 incomplete, or suppressed scans cannot establish that earlier drift disappeared.
 An expired suppression no longer hides findings. Suppressions need a reason and
 an end date. This release conservatively pauses target delivery when findings are
-suppressed. An issue's closure is a human workflow action, not proof of clean infrastructure.
+suppressed. Issue closure is manual by default and can be explicitly enabled for verified
+resolution. Closure alone is not proof of clean infrastructure. Jira transitions
+need project-specific IDs and destination-category checks; failed transitions
+remain pending. Recurring drift reopens trackers according to configured policy.
 
 See [delivery setup](../../docs/diataxis/how-to/configure-delivery.md).
+
+
+# Scan history
+
+A historical record describes what was observed within a target's selected scope
+at one time. An incomplete result cannot establish resolution, and a notification
+receipt cannot establish that infrastructure was fixed. Keep history bounded and
+value-free; retain it outside ephemeral runner caches when long-term history is
+required. Disabling collection does not erase past observations.

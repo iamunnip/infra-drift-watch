@@ -20,3 +20,6 @@ make openspec-check and make workflow-check in addition to make check.
 Local checks use PATH, including Brew installations; no tools are installed by
 check targets. make tools/dev-tools/kind-tools are explicit optional installers,
 used only on ephemeral CI runners unless a contributor deliberately invokes them.
+
+When updating tool/dependency versions, update [third-party notices](THIRD_PARTY_NOTICES.md)
+and preserved license texts/provenance. Project MIT does not replace upstream terms.

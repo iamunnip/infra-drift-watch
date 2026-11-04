@@ -7,7 +7,7 @@ Independent delivery and persistence. Define testable behavior, safe failure han
 ## Requirements
 
 ### Requirement: GitHub issue grouping
-GitHub delivery SHALL reconcile one marked issue per target and leave resolution updates open.
+GitHub delivery SHALL reconcile one marked issue per target and leave resolution updates open unless auto_close is explicitly enabled.
 
 #### Scenario: Recover a previous issue
 - **WHEN** a matching issue marker exists without a local acknowledgement
@@ -40,3 +40,21 @@ Persistent receipts SHALL use an exclusive lock and atomic replacement.
 #### Scenario: Concurrent invocation
 - **WHEN** a second process opens the same locked state directory
 - **THEN** the second process fails before scanning
+
+### Requirement: Optional closure and recurrence
+Only complete clean scans SHALL close known GitHub issues or apply configured Jira resolution transitions when auto_close is true. Recurring drift SHALL reopen GitHub issues and configured Jira workflows.
+
+#### Scenario: Failed or incomplete scan
+- **WHEN** a scan fails, is incomplete, or hides drift through suppression
+- **THEN** no resolution or closure is delivered
+
+#### Scenario: Jira transition unavailable
+- **WHEN** the configured transition is unavailable or leads to the wrong done/non-done category
+- **THEN** delivery fails and its prior active receipt remains pending for retry
+
+### Requirement: Policy reconciliation
+A changed tracker closure policy SHALL reconcile an already-resolved known issue when its local receipt retains the tracker link.
+
+#### Scenario: Enable closure after manual resolution updates
+- **WHEN** auto_close is enabled for a known resolved issue previously kept open
+- **THEN** the next complete clean scan applies closure without creating a new issue

@@ -15,7 +15,9 @@ exists. Refresh-only results do not discover all unmanaged account resources.
 Kubernetes comparison uses supplied manifests and server-side dry-run semantics.
 Defaults, admission, and field ownership affect the result. Ownership conflicts
 are failures requiring review, never clean results. Resources omitted from supplied
-manifests are outside coverage. This release reports a manifest-set finding rather
-than attributing Kubernetes differences to individual fields or resources.
+manifests are outside coverage. Changed resources are identified by API version, kind, namespace and name.
+Field paths can be derived from complete native diff hunks without publishing
+values. Unfamiliar or redacted output may retain resource/set-level findings;
+missing field detail must not be interpreted as no drift.
 
 See [architecture constraints](../../docs/arc42/02-constraints.md).

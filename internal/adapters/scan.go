@@ -25,13 +25,19 @@ type Scanner struct{ Run Runner }
 const maxOutput = 32 << 20
 
 // limitedBuffer stops a noisy process from filling memory. Values never enter reports.
-type limitedBuffer struct{ bytes.Buffer }
+type limitedBuffer struct {
+	data     bytes.Buffer
+	exceeded bool
+}
+
+func (b *limitedBuffer) Bytes() []byte { return b.data.Bytes() }
 
 func (b *limitedBuffer) Write(p []byte) (int, error) {
-	if b.Len()+len(p) > maxOutput {
+	if b.data.Len()+len(p) > maxOutput {
+		b.exceeded = true
 		return 0, errors.New("tool output exceeded limit")
 	}
-	return b.Buffer.Write(p)
+	return b.data.Write(p)
 }
 func Execute(ctx context.Context, dir, exe string, args, env []string) ([]byte, int, error) {
 	cmd := exec.CommandContext(ctx, exe, args...)
@@ -50,6 +56,9 @@ func Execute(ctx context.Context, dir, exe string, args, env []string) ([]byte, 
 	cmd.Stderr = io.Discard
 	cmd.WaitDelay = 2 * time.Second
 	err := cmd.Run()
+	if out.exceeded {
+		return nil, -1, errors.New("tool output exceeded limit")
+	}
 	if ctx.Err() != nil {
 		return nil, -1, errors.New("tool timed out or was cancelled")
 	}
@@ -93,15 +102,14 @@ func (s Scanner) Scan(ctx context.Context, t config.Target) drift.Result {
 		for _, p := range t.Manifests {
 			args = append(args, "-f", p)
 		}
-		output, code, e := run(ctx, "", exe, args, []string{"KUBECTL_EXTERNAL_DIFF=diff"})
+		output, code, e := run(ctx, "", exe, args, []string{"KUBECTL_EXTERNAL_DIFF=diff -U 1000000 -N"})
 		if e != nil || code > 1 || code < 0 {
 			return failed(t, "kubectl diff failed; check context, permissions, manifests and timeout")
 		}
 		r := drift.Result{Target: t.ID, Adapter: t.Adapter, Status: "clean", Findings: []drift.Finding{}}
 		if code == 1 {
 			r.Status = "drift"
-			r.Findings = append(r.Findings, drift.Finding{Resource: "manifest-set", Actions: []string{"difference"}})
-			r.Digest = drift.Hash(stableDiff(output))
+			r.Findings, r.Digest = kubernetesDetails(output)
 		}
 		return suppress(t, r)
 	}
@@ -196,7 +204,7 @@ func suppress(t config.Target, r drift.Result) drift.Result {
 		ignored := false
 		for _, s := range t.Suppressions {
 			until, e := time.Parse("2006-01-02", s.Until)
-			if e == nil && time.Now().UTC().Before(until.Add(24*time.Hour)) && s.Resource == f.Resource {
+			if e == nil && time.Now().UTC().Before(until.Add(24*time.Hour)) && (s.Resource == f.Resource || t.Adapter == "kubernetes" && s.Resource == "manifest-set") {
 				ignored = true
 				break
 			}
@@ -223,7 +231,7 @@ func stableDiff(output []byte) string {
 	paths := regexp.MustCompile(`/(LIVE|MERGED)-[0-9]+`)
 	for i, line := range lines {
 		if strings.HasPrefix(line, "diff ") || strings.HasPrefix(line, "--- /") || strings.HasPrefix(line, "+++ /") {
-			lines[i] = paths.ReplaceAllString(line, "/$1")
+			lines[i] = paths.ReplaceAllString(strings.SplitN(line, "\t", 2)[0], "/$1")
 		}
 	}
 	return strings.Join(lines, "\n")

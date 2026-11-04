@@ -66,3 +66,10 @@ func TestExecuteCancellationAndSecretStderr(t *testing.T) {
 		t.Fatalf("out=%s code=%d err=%v", out, code, err)
 	}
 }
+
+func TestExecuteRejectsOversizedOutputEvenWithDriftExitCode(t *testing.T) {
+	out, code, err := Execute(context.Background(), "", "sh", []string{"-c", "head -c 33554433 /dev/zero; exit 1"}, nil)
+	if err == nil || code >= 0 || out != nil {
+		t.Fatalf("truncated output accepted: bytes=%d code=%d err=%v", len(out), code, err)
+	}
+}

@@ -26,3 +26,10 @@ Each inventory target SHALL have a stable unique ID independent of owner, enviro
 #### Scenario: Duplicate target IDs
 - **WHEN** two targets share an ID
 - **THEN** validation rejects the inventory
+
+### Requirement: History and closure settings
+History SHALL default to enabled with 100 records per target, with a configurable limit from 1 to 10000. GitHub and Jira auto_close SHALL default to false. Jira auto_close SHALL require resolve and reopen transition IDs.
+
+#### Scenario: Target opts out
+- **WHEN** a target explicitly disables inherited history or closure settings
+- **THEN** false overrides the global setting for that target

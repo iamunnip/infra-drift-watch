@@ -63,3 +63,13 @@ tools from PATH; do not prepend ignored .tools/bin copies. Do not run installer
 targets on the user's host. Use the container linter when golangci-lint is absent.
 Also verify make openspec-check, mermaid-check, workflow-check and vuln when their
 prerequisites are available. CI checks all of these with pinned current tools.
+
+Keep THIRD_PARTY_NOTICES.md, licenses/ provenance, container copies and release
+notices aligned when changing dependencies or bundled tools. Distinguish project
+MIT, OpenTofu MPL-2.0 and the pinned Terraform BSL-1.1; providers have separate terms.
+
+History is bounded and value-free, enabled by default; dry-run must never append
+records. Preserve v1 receipts when migrating to state v2. Read-only history must
+not require inventory or credentials. Closure is opt-in, requires complete clean
+coverage, and must preserve failed transition receipts for retry. Keep manifest-set
+suppressions compatible with resource-level Kubernetes findings.

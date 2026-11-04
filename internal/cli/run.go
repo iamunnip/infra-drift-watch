@@ -24,6 +24,8 @@ func RunContext(ctx context.Context, args []string, out, errOut io.Writer) int {
 		return help(out)
 	}
 	switch args[0] {
+	case "history":
+		return history(args[1:], out, errOut)
 	case "scan", "validate":
 		return configured(ctx, args, out, errOut)
 	case "help", "--help", "-h":
@@ -50,6 +52,7 @@ func help(out io.Writer) int {
 Usage:
   infra-drift-watch --help
   infra-drift-watch version
+  infra-drift-watch history --state-dir .state [--target ID] [--format json]
   infra-drift-watch validate --config config.yaml --inventory inventory.yaml
   infra-drift-watch scan --config config.yaml --inventory inventory.yaml [--dry-run]
 
@@ -101,4 +104,26 @@ func configured(ctx context.Context, args []string, out, errOut io.Writer) int {
 		return failure(errOut, err.Error())
 	}
 	return code
+}
+
+func history(args []string, out, errOut io.Writer) int {
+	flags := flag.NewFlagSet("history", flag.ContinueOnError)
+	flags.SetOutput(errOut)
+	dir := flags.String("state-dir", ".state", "existing state directory")
+	target := flags.String("target", "", "exact target ID; all targets by default")
+	format := flags.String("format", "terminal", "terminal or json")
+	limit := flags.Int("limit", 20, "latest records to return, 1-10000")
+	if err := flags.Parse(args); err != nil {
+		if err == flag.ErrHelp {
+			return 0
+		}
+		return 1
+	}
+	if flags.NArg() != 0 {
+		return failure(errOut, "unexpected positional arguments")
+	}
+	if err := app.History(*dir, *target, *format, *limit, out); err != nil {
+		return failure(errOut, err.Error())
+	}
+	return 0
 }

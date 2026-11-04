@@ -7,7 +7,7 @@ are errors. No environment substitution is performed inside YAML strings.
 
 | Key | Default / behavior |
 | --- | --- |
-| state_dir | `.state`, relative to global config; receipt directory |
+| state_dir | `.state`, relative to global config; receipts and history directory |
 | format | `terminal` or `json`; default terminal |
 | defaults | Settings inherited by all targets |
 
@@ -19,7 +19,10 @@ are errors. No environment substitution is performed inside YAML strings.
 | http_timeout | `30s`, positive total budget per destination including retries |
 | retries | `2`, range 0–5; explicit 429 responses, or GET 5xx only |
 | executable | Adapter's default `tofu`, `terraform`, or `kubectl`; override executable path (use an absolute path or a name on PATH) |
+| history.enabled | true; persist normal scan records, including failed/incomplete results |
+| history.limit | 100 records per target; integer 1–10000 |
 | github.enabled | false |
+| github.auto_close | false; close the marked issue only on complete clean scans; reopen on recurrence |
 | github.repository | Required owner/repository when enabled |
 | github.api_url | `https://api.github.com`; HTTPS, no credentials/query/fragment |
 | github.token_env | `GITHUB_TOKEN` |
@@ -29,6 +32,11 @@ are errors. No environment substitution is performed inside YAML strings.
 | slack.webhook_env | `SLACK_WEBHOOK_URL`; variable contains HTTPS webhook URL |
 | slack.repeat | `24h`, positive unchanged-drift reminder interval |
 | jira.enabled | false |
+| jira.auto_close | false; opt-in resolve/reopen transitions on existing marked issues |
+| jira.resolve_transition | Project-specific transition ID string; required with auto_close |
+| jira.reopen_transition | Project-specific transition ID string; required with auto_close |
+| jira.resolve_fields | Optional replacement map of fields needed by the resolve transition, such as resolution |
+| jira.reopen_fields | Optional replacement map of fields needed by the reopen transition |
 | jira.url | Required HTTPS Jira Cloud site when enabled |
 | jira.project | Required uppercase project key |
 | jira.issue_type | `Task` |
@@ -39,7 +47,8 @@ are errors. No environment substitution is performed inside YAML strings.
 Nonempty scalars override inherited values. Explicit booleans and retry zero
 are respected. Nested settings merge field by field. Lists/maps replace entirely;
 `[]` or `{}` clears inherited collections. Null and empty strings inherit.
-There is no automatic issue closure setting in this release.
+Closure remains manual unless explicitly enabled. Jira transition destinations
+are checked against done (resolution) or non-done (recurrence) status categories.
 
 ## Inventory targets
 
@@ -58,7 +67,11 @@ There is no automatic issue closure setting in this release.
 | suppressions | List of resource, reason, until (YYYY-MM-DD, inclusive UTC) |
 | settings | Overrides for this target |
 
-Use `manifest-set` to suppress the complete Kubernetes comparison. Suppressions
+Kubernetes identities use apiVersion/Kind/namespace/name, such as
+`v1/ConfigMap/default/demo` or `apps/v1/Deployment/production/web`. Cluster-scoped
+resources use `_cluster` instead of namespace.
+Use `manifest-set` to suppress the complete Kubernetes comparison, including
+detailed resource findings, preserving older configurations. Suppressions
 are exact resource identities, not globs. Any active matching suppression produces
 an incomplete result and prevents delivery/resolution for the target. Expired
 suppressions no longer hide findings. This conservative policy avoids announcing

@@ -14,6 +14,7 @@ type Report struct {
 	SchemaVersion  string         `json:"schema_version"`
 	Started        time.Time      `json:"started"`
 	Results        []drift.Result `json:"results"`
+	HistoryErrors  []string       `json:"history_errors,omitempty"`
 	DeliveryErrors []string       `json:"delivery_errors"`
 }
 
@@ -31,6 +32,11 @@ func Write(out io.Writer, format string, r Report) error {
 			if _, e := fmt.Fprintf(out, "  %s: %v\n", f.Resource, f.Actions); e != nil {
 				return e
 			}
+			if len(f.Fields) > 0 {
+				if _, e := fmt.Fprintf(out, "    fields: %v\n", f.Fields); e != nil {
+					return e
+				}
+			}
 		}
 		if v.Error != "" {
 			if _, e := fmt.Fprintln(out, "  "+v.Error); e != nil {
@@ -40,6 +46,11 @@ func Write(out io.Writer, format string, r Report) error {
 	}
 	for _, e := range r.DeliveryErrors {
 		if _, err := fmt.Fprintln(out, "delivery failed: "+e); err != nil {
+			return err
+		}
+	}
+	for _, message := range r.HistoryErrors {
+		if _, err := fmt.Fprintln(out, "history failed: "+message); err != nil {
 			return err
 		}
 	}
