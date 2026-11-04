@@ -30,7 +30,7 @@ providers, external data sources, and credential plugins can execute code.
 
 ## Quick start
 
-Prerequisites: Linux, Go 1.27.3, Make. The module minimum is Go 1.26.
+Prerequisites: Linux, Go 1.27.3, Make. The module, CI, and container use Go 1.27.3.
 
 ```sh
 make check
@@ -41,7 +41,9 @@ make check
 Validation checks YAML and settings without calling infrastructure or delivery
 APIs, requiring credentials, or creating state. It does not prove backend access.
 
-Install pinned adapter tools explicitly (requires curl, unzip, sha256sum, network):
+Use your Brew-installed tools from PATH. In an ephemeral environment that needs
+provisioning, you can explicitly install pinned adapter tools (requires Go, curl,
+tar, unzip, sha256sum, network):
 
 ```sh
 make tools
@@ -122,6 +124,14 @@ Never bake secrets into images. [Bundled tools retain their upstream licenses](T
 
 ## GitHub Actions
 
+Validation runs on pull requests targeting develop/main and on workflow_dispatch,
+never on push. Separate jobs check Go formatting, lint, vet, module integrity,
+race tests/build, documentation, OKF knowledge, Mermaid, OpenSpec, native adapters,
+and the runtime container. Release publishing is manual workflow_dispatch with an
+existing version tag on main; pushing a branch or tag does not publish a release.
+Dependabot proposes weekly Go/npm/action/container updates into develop.
+
+
 [Scheduled scan](.github/workflows/scan.yml) runs every six hours in UTC only when
 `DRIFT_SCAN_ENABLED=true`. It uses GitHub-hosted runners, AWS OIDC, one writer,
 best-effort receipt caching, and report artifacts. Configure the destination,
@@ -140,21 +150,27 @@ and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 | Command | Purpose |
 | --- | --- |
-| `make check` | Formatting, vet, race tests, build, local doc/OKF checks |
+| `make check` | Formatting, vet, module integrity, race tests, build, docs/OKF checks |
 | `make test` | Unit and mocked integration tests |
 | `make test-race` | Race-enabled tests |
 | `make test-integration` | Real OpenTofu/Terraform tests using installed tools |
 | `make test-kubernetes` | Disposable cluster test; requires kind, kubectl, Docker |
 | `make fmt` / `make fmt-check` | Format / check Go source |
-| `make vet` / `make lint` | Go static analysis (lint currently aliases vet) |
-| `make vuln` | Pinned govulncheck; install explicitly with make dev-tools |
-| `make docs-check` | Markdown file links, workflow YAML and OKF conventions |
+| `make vet` / `make lint` | Go vet / golangci-lint from PATH |
+| `make lint-docker` | Run pinned golangci-lint in a container; no host install |
+| `make vuln` | Run govulncheck from PATH |
+| `make docs-check` | Documentation links and workflow YAML |
+| `make knowledge-check` | Knowledge links and OKF metadata |
+| `make openspec-check` | Strict OpenSpec validation using openspec from PATH |
 | `make mermaid-check` | Real Mermaid parsing; requires npm ci --prefix scripts/mermaid --ignore-scripts |
 | `make tools` | Explicit download of checksum-verified runtime executables |
 | `make kind-tools` | Explicit install of pinned kind for disposable cluster checks |
 | `make dev-tools` | Explicit installation of pinned Go verification tools |
 | `make docker-build` | Build the bundled runtime image |
 
+Local checks and integration tests use your installed tools from PATH; ignored
+.tools/bin copies never take precedence automatically. Verification executables
+can be overridden with GOVULNCHECK, ACTIONLINT, GOLANGCI_LINT, and OPENSPEC.
 `make check` is offline after Go dependencies are cached. Mermaid parsing,
 vulnerability checks, and tool integration are separate CI steps with explicit
 prerequisites. No live cloud or notifications are needed for normal tests.

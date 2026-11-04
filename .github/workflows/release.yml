@@ -1,32 +1,41 @@
 name: Release binaries
 on:
-  push:
-    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag on main, for example v0.1.0
+        required: true
+        type: string
 permissions:
   contents: write
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
-      - name: Require release commit on main
-        run: git merge-base --is-ancestor HEAD origin/main
-      - uses: actions/setup-go@v6
+      - name: Require an existing version tag on main
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]
+          git checkout --detach "refs/tags/$RELEASE_TAG"
+          git merge-base --is-ancestor HEAD origin/main
+      - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
       - run: make check
       - name: Build Linux binaries
         run: |
           mkdir -p dist
           for arch in amd64 arm64; do
-            GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -trimpath -ldflags "-X github.com/iamunnip/infra-drift-watch/internal/cli.Version=${GITHUB_REF_NAME}" -o "dist/infra-drift-watch-linux-$arch" ./cmd/infra-drift-watch
+            GOOS=linux GOARCH="$arch" CGO_ENABLED=0 go build -trimpath -ldflags "-X github.com/iamunnip/infra-drift-watch/internal/cli.Version=${RELEASE_TAG}" -o "dist/infra-drift-watch-linux-$arch" ./cmd/infra-drift-watch
           done
           cd dist
           sha256sum infra-drift-watch-* > SHA256SUMS
-      - name: Publish release artifacts
+      - name: Publish draft release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/* --draft --generate-notes
+        run: gh release create "$RELEASE_TAG" dist/* --draft --generate-notes

@@ -43,11 +43,11 @@ func (e *Engine) jira(ctx context.Context, t config.Target, r drift.Result, retr
 			break
 		}
 		if result.Next == token {
-			return errors.New("Jira pagination did not advance")
+			return errors.New("jira pagination did not advance")
 		}
 		token = result.Next
 		if page == 999 {
-			return errors.New("Jira lookup exceeded pagination limit")
+			return errors.New("jira lookup exceeded pagination limit")
 		}
 	}
 	if key == "" && r.Status == "clean" {
@@ -76,7 +76,7 @@ func (e *Engine) jira(ctx context.Context, t config.Target, r drift.Result, retr
 		return err
 	}
 	if created.Key == "" {
-		return errors.New("Jira creation response lacks issue key")
+		return errors.New("jira creation response lacks issue key")
 	}
 	e.links["jira"] = strings.TrimRight(s.URL, "/") + "/browse/" + url.PathEscape(created.Key)
 	return nil

@@ -39,7 +39,7 @@ func TestDisposableKubernetes(t *testing.T) {
 			t.Errorf("cleanup failed: %s %v", out, err)
 		}
 	})
-	cmd := exec.CommandContext(ctx, kind, "create", "cluster", "--name", name, "--kubeconfig", kubeconfig, "--image", "kindest/node:v1.36.4", "--wait", "90s")
+	cmd := exec.CommandContext(ctx, kind, "create", "cluster", "--name", name, "--kubeconfig", kubeconfig, "--image", "kindest/node:v1.37.0", "--wait", "90s")
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("create disposable cluster: %s %v", out, err)
 	}

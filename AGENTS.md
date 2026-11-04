@@ -48,7 +48,7 @@ do not invent domain changes solely to modify a file.
 
 ## Verification
 
-Run `make check` (format check, vet, race tests, build, local docs/OKF checks). Use `make test` or focused
+Run `make check` (format check, vet, module integrity, race tests, build, local docs/OKF checks). Use `make test` or focused
 `go test` commands during TDD. `make fmt` changes formatting. `make docker-build`
 requires a Docker daemon and network access for its builder image.
 Runtime/developer tools require explicit opt-in `make tools` / `make dev-tools`.
@@ -56,3 +56,10 @@ Run Mermaid parsing with `make mermaid-check` after the documented npm install.
 Integration tests may provision disposable local fixtures; never real AWS resources.
 Only list checks as passed when run successfully. Missing prerequisites and
 unverified remote behavior must be reported. Do not install tools silently.
+
+Validation triggers are pull_request and workflow_dispatch, never push. Releases
+are manual dispatch against an existing version tag on main. Local checks resolve
+tools from PATH; do not prepend ignored .tools/bin copies. Do not run installer
+targets on the user's host. Use the container linter when golangci-lint is absent.
+Also verify make openspec-check, mermaid-check, workflow-check and vuln when their
+prerequisites are available. CI checks all of these with pinned current tools.

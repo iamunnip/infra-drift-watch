@@ -32,3 +32,17 @@ A JSON report is retained for 14 days. Drift exit code 2 is a successful workflo
 outcome; scan/coverage/delivery failures fail the workflow after state/report saving.
 GitHub scheduling can be delayed. Private backend or API connectivity must be
 verified from a hosted runner before enabling.
+
+## Validation and releases
+
+CI runs on pull_request targeting develop/main and workflow_dispatch, not push.
+Go checks cover formatting, golangci-lint, vet, module verification, race tests,
+and builds. Documentation checks cover local links, OKF knowledge metadata,
+Mermaid parsing and strict OpenSpec validation. Integration checks cover native
+adapters and Docker. These jobs require no live infrastructure or destination secrets.
+
+Release binaries are produced only through workflow_dispatch with an existing
+version tag on main. The workflow validates the tag and creates a draft release;
+pushing a tag alone triggers nothing. Dependabot submits weekly dependency updates
+targeting develop. Pin upgrades are reviewed and tested rather than using floating
+latest tags at execution time.
