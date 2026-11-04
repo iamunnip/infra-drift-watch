@@ -67,3 +67,6 @@ Mermaid, separate docs/knowledge checks, and golangci-lint 2.15.0 in a read-only
 container passed; govulncheck reported no vulnerabilities. npm dependency refresh
 reported no vulnerabilities and no newer compatible Mermaid/jsdom versions.
 No host tool installers were run for this update. Domain knowledge did not change.
+
+License texts and notice paths are documented in [third-party notices](../../../THIRD_PARTY_NOTICES.md).
+Runtime images and manual release archives include the named component licenses.

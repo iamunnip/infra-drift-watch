@@ -8,6 +8,8 @@
 - [Configuration](diataxis/reference/configuration.md)
 - [CLI and reports](diataxis/reference/cli.md)
 - [Verification and compatibility](diataxis/reference/verification.md)
+- [Licensing](diataxis/explanation/licensing.md)
+- [Third-party notices](../THIRD_PARTY_NOTICES.md)
 - [Original project intake](diataxis/explanation/project-intake.md)
 - [Architecture](arc42/index.md)
 - [Decisions](adr/index.md)

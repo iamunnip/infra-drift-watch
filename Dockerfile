@@ -19,7 +19,8 @@ COPY --from=build /out/infra-drift-watch /usr/local/bin/infra-drift-watch
 COPY --from=tools /tools/ /usr/local/bin/
 COPY --from=ghcr.io/opentofu/opentofu:1.13.5-minimal /usr/local/bin/tofu /usr/local/bin/tofu
 COPY LICENSE /LICENSE
-COPY THIRD_PARTY.md /THIRD_PARTY.md
+COPY licenses/ /usr/share/licenses/infra-drift-watch/
+COPY THIRD_PARTY_NOTICES.md /THIRD_PARTY_NOTICES.md
 USER 65532:65532
 WORKDIR /work
 ENTRYPOINT ["/usr/local/bin/infra-drift-watch"]

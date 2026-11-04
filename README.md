@@ -1,7 +1,7 @@
 # infra-drift-watch
 
 A Go CLI that detects infrastructure drift and reports it through terminal/JSON
-output, GitHub issues, Slack, and optional Jira. MIT licensed; no web UI.
+output, GitHub issues, Slack, and optional Jira. Original project code is MIT licensed; no web UI.
 
 **Status: initial implementation, not a production release.** OpenTofu and
 Terraform refresh-only scanning and Kubernetes manifest comparison are implemented.
@@ -120,7 +120,10 @@ initialized workspace with the access required for backend locks and provider
 execution, mount a writable state directory at `/state`, and use `--state-dir /state`.
 Supply credentials at runtime. Kubernetes needs a mounted kubeconfig and any
 credential plugin it references. Plan creation needs a writable temporary directory.
-Never bake secrets into images. [Bundled tools retain their upstream licenses](THIRD_PARTY.md).
+Never bake secrets into images. [Third-party notices](THIRD_PARTY_NOTICES.md)
+and license texts are included in the image. OpenTofu uses MPL-2.0; the bundled
+Terraform release uses BSL-1.1 and its additional use grant. The image's components
+are not all covered by the application's MIT license.
 
 ## GitHub Actions
 
@@ -194,4 +197,8 @@ Reports omit values; ephemeral plan files use a private directory and are remove
 on normal exits. Tool errors are summarized rather than exposing raw stderr.
 Process crashes may leave temporary artifacts; use isolated runners and temporary storage.
 Resource names, owners, and environment labels are still operational metadata.
-See [security reporting](SECURITY.md) and [MIT license](LICENSE).
+The project's original code is [MIT licensed](LICENSE). OpenTofu, Terraform,
+providers, linked libraries, and OS packages retain separate terms. See
+[third-party notices](THIRD_PARTY_NOTICES.md), the
+[license comparison](docs/diataxis/explanation/licensing.md), and
+[security reporting](SECURITY.md). Manual releases include a license/notices archive.
