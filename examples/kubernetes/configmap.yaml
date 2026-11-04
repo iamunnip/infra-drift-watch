@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: drift-watch-demo
+  namespace: default
+data:
+  greeting: hello

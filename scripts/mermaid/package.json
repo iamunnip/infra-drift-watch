@@ -1,0 +1,7 @@
+{
+  "name": "infra-drift-watch-diagram-checks",
+  "private": true,
+  "type": "module",
+  "scripts": { "check": "node check.mjs" },
+  "devDependencies": { "mermaid": "12.3.0", "jsdom": "30.1.3" }
+}

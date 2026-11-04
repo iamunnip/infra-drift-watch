@@ -1,0 +1,6 @@
+# Directory update log
+
+## 2026-11-04
+
+- Created the bundle and recorded drift and coverage distinctions.
+- Added comparison boundaries and delivery/resolution policy.

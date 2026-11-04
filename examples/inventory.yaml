@@ -1,0 +1,11 @@
+# Resource paths are relative to this inventory. Initialize the workspace yourself.
+targets:
+  - id: aws-demo
+    adapter: opentofu
+    path: aws
+    workspace: default
+    owner: platform
+    environment: development
+    description: Demonstration AWS S3 bucket; provision separately before scanning
+    settings:
+      timeout: 3m

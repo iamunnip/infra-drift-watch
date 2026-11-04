@@ -1,0 +1,11 @@
+*
+!go.mod
+!go.sum
+!cmd/
+!cmd/**
+!internal/
+!internal/**
+!scripts/
+!scripts/install-tools.sh
+!LICENSE
+!THIRD_PARTY.md

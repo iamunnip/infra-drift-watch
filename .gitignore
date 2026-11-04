@@ -1,0 +1,11 @@
+/bin/
+/coverage.out
+/.state/
+.env
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+/.tools/
+node_modules/
+/report.json
