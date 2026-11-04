@@ -1,6 +1,7 @@
 # Scan an existing AWS workspace
 
-Install the tools using `make tools` and add `.tools/bin` to PATH. Configure AWS
+Use your installed OpenTofu/Terraform from PATH (Homebrew is supported). Optional
+installer targets are for deliberately provisioned environments such as CI. Configure AWS
 credentials through your normal credential chain. In GitHub Actions prefer OIDC.
 
 The [example](../../../examples/aws/main.tf) models an S3 bucket. Select an existing

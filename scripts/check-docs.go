@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -14,6 +15,12 @@ import (
 )
 
 func main() {
+	scope := flag.String("scope", "all", "all, docs, or knowledge")
+	flag.Parse()
+	if *scope != "all" && *scope != "docs" && *scope != "knowledge" {
+		fmt.Fprintln(os.Stderr, "invalid documentation scope")
+		os.Exit(1)
+	}
 	var failures []string
 	links := regexp.MustCompile(`\]\(([^)]+)\)`)
 	err := filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
@@ -26,7 +33,7 @@ func main() {
 			}
 			return nil
 		}
-		if strings.HasPrefix(path, ".github/workflows/") && strings.HasSuffix(path, ".yml") {
+		if *scope != "knowledge" && strings.HasPrefix(path, ".github/workflows/") && strings.HasSuffix(path, ".yml") {
 			data, e := os.ReadFile(path)
 			if e != nil {
 				return e
@@ -35,6 +42,9 @@ func main() {
 			if e = yaml.Unmarshal(data, &v); e != nil {
 				failures = append(failures, path+": invalid workflow YAML")
 			}
+		}
+		if *scope == "knowledge" && !strings.HasPrefix(path, "knowledge/") || *scope == "docs" && strings.HasPrefix(path, "knowledge/") {
+			return nil
 		}
 		if !strings.HasSuffix(path, ".md") {
 			return nil
@@ -91,5 +101,5 @@ func main() {
 		}
 		os.Exit(1)
 	}
-	fmt.Println("Documentation links, workflow YAML and repository OKF conventions pass")
+	fmt.Printf("Documentation checks pass (scope: %s)\n", *scope)
 }

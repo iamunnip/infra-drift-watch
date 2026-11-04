@@ -31,7 +31,7 @@ func TestRealObservedDriftDoesNotRefreshState(t *testing.T) {
 			managed := filepath.Join(dir, "managed.txt")
 			source := fmt.Sprintf(`terraform {
  required_providers {
-  local = { source = "hashicorp/local", version = "2.5.3" }
+  local = { source = "hashicorp/local", version = "2.9.1" }
  }
 }
 resource "local_file" "demo" {

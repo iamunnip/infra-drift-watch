@@ -114,7 +114,8 @@ func (e *Engine) Deliver(ctx context.Context, t config.Target, r drift.Result) e
 		if r.Status == "clean" && !entry.Active {
 			continue
 		}
-		if entry.Fingerprint == fingerprint && !(r.Status == "drift" && d.repeat > 0 && now.Sub(entry.Updated) >= d.repeat) {
+		reminderDue := r.Status == "drift" && d.repeat > 0 && now.Sub(entry.Updated) >= d.repeat
+		if entry.Fingerprint == fingerprint && !reminderDue {
 			continue
 		}
 		sendCtx, cancel := context.WithTimeout(ctx, timeout)

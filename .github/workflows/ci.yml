@@ -1,32 +1,75 @@
 name: CI
 on:
-  push:
-    branches: [develop, main]
   pull_request:
     branches: [develop, main]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  check:
+  go:
+    name: Go formatting, lint, validation and tests
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v6
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
-      - uses: actions/setup-node@v4
+      - run: make fmt-check vet mod-check test-race build
+      - name: Validate sample inventories
+        run: |
+          bin/infra-drift-watch validate --config examples/config.yaml --inventory examples/inventory.yaml
+          bin/infra-drift-watch validate --config examples/config.yaml --inventory examples/kubernetes/inventory.yaml
+      - uses: golangci/golangci-lint-action@v9.3.0
         with:
-          node-version: '26'
+          version: v2.15.0
+      - run: make dev-tools
+      - name: Use CI-installed verification tools
+        run: echo "$GITHUB_WORKSPACE/.tools/bin" >> "$GITHUB_PATH"
+      - run: make workflow-check vuln
+  documentation:
+    name: Docs, OKF knowledge, Mermaid and OpenSpec
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: '26.13.0'
           cache: npm
           cache-dependency-path: scripts/mermaid/package-lock.json
-      - run: make check
       - run: npm ci --prefix scripts/mermaid --ignore-scripts
-      - run: make mermaid-check
-      - run: make dev-tools
-      - run: make workflow-check vuln
-      - run: make tools kind-tools
+      - name: Install pinned OpenSpec on the ephemeral runner
+        run: npm install --global @fission-ai/openspec@1.16.0
+      - name: Check documentation links and workflow YAML
+        run: make docs-check
+      - name: Check knowledge links and OKF metadata
+        run: make knowledge-check
+      - name: Parse every Mermaid diagram
+        run: make mermaid-check
+      - name: Validate OpenSpec requirements and scenarios
+        run: make openspec-check
+  integration:
+    name: Native adapters and runtime container
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-go@v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Install pinned runtime tools on the ephemeral runner
+        run: make tools kind-tools
+      - run: echo "$GITHUB_WORKSPACE/.tools/bin" >> "$GITHUB_PATH"
       - run: make test-integration test-kubernetes
       - run: docker build -t infra-drift-watch:ci .
       - run: docker run --rm --network none --read-only infra-drift-watch:ci version

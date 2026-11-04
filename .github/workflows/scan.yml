@@ -25,23 +25,23 @@ jobs:
       INIT_PATH: ${{ vars.DRIFT_INIT_PATH }}
       TF_VAR_bucket_name: ${{ vars.DRIFT_AWS_BUCKET_NAME }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
       - name: Require deployment settings
         run: |
           test -n "$CONFIG_PATH"
           test -n "$INVENTORY_PATH"
           test -n "$INIT_PATH"
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7.0.0
         with:
-          go-version: '1.27.3'
+          go-version-file: go.mod
           cache: true
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6.3.0
         with:
           role-to-assume: ${{ secrets.DRIFT_AWS_ROLE_ARN }}
           aws-region: ${{ vars.DRIFT_AWS_REGION || 'us-east-1' }}
       - run: make tools build
       - name: Restore delivery receipts
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6.1.0
         with:
           path: .state
           key: drift-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -59,11 +59,11 @@ jobs:
           exit 0
       - name: Save delivery receipts
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6.1.0
         with:
           path: .state
           key: drift-state-${{ github.ref_name }}-${{ github.run_id }}-${{ github.run_attempt }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         if: always()
         with:
           name: drift-report

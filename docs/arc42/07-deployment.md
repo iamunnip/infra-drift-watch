@@ -14,3 +14,5 @@ flowchart LR
 ```
 
 The Docker alternative bundles pinned native tools and runs as UID/GID 65532. Mount configuration, workspace, credentials and writable state intentionally. There is no deployed server.
+
+Validation jobs run on PRs and manual dispatch; draft release generation is manual. Only the separately configured drift scan has a schedule.
