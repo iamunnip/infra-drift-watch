@@ -79,6 +79,8 @@ func configured(ctx context.Context, args []string, out, errOut io.Writer) int {
 	flags.StringVar(&o.Format, "format", "", "terminal or json")
 	flags.StringVar(&o.Timeout, "timeout", "", "per-target scan timeout override")
 	flags.StringVar(&o.StateDir, "state-dir", "", "delivery state directory override")
+	flags.Func("aws-profile", "AWS shared profile override; empty clears inherited profile selection", func(value string) error { o.AWSProfile = &value; return nil })
+	flags.Func("aws-region", "AWS region override; empty clears inherited region selection", func(value string) error { o.AWSRegion = &value; return nil })
 	flags.BoolVar(&o.DryRun, "dry-run", false, "inspect infrastructure without delivery or receipt writes")
 	if err := flags.Parse(args[1:]); err != nil {
 		if err == flag.ErrHelp {

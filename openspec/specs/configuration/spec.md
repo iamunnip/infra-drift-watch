@@ -33,3 +33,14 @@ History SHALL default to enabled with 100 records per target, with a configurabl
 #### Scenario: Target opts out
 - **WHEN** a target explicitly disables inherited history or closure settings
 - **THEN** false overrides the global setting for that target
+
+### Requirement: AWS selectors without credential storage
+AWS profile and region SHALL be configurable globally, per target and through explicit CLI overrides. Omitted selectors SHALL preserve runtime AWS selection; explicit empty strings SHALL clear inherited selector environment values. Credentials SHALL remain outside scanner configuration.
+
+#### Scenario: Select the default profile
+- **WHEN** a target resolves aws.profile default and aws.region us-east-1
+- **THEN** those selectors reach all native tool commands without changing the host environment
+
+#### Scenario: OIDC target overrides local profile
+- **WHEN** the CLI explicitly clears the AWS profile
+- **THEN** inherited named-profile selectors are cleared in child processes while temporary credential variables remain available

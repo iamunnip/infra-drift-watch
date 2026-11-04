@@ -84,3 +84,10 @@ checks pass, the container linter reports zero issues, and the updated image can
 read history with no network, inventory, credentials or writable mounts. Six
 Mermaid diagrams and seven OpenSpec capabilities validate. Live AWS/destination
 verification still needs deployment configuration; no live services were exercised.
+
+AWS selector checks cover global/target/CLI precedence, explicit clearing, both
+state-tool commands and Kubernetes auth-plugin inheritance, unchanged parent
+environment, preserved temporary credentials, and validation without credential
+reads or remote calls. Example HCL region defaults to null so environment selection
+is effective unless the workspace explicitly overrides it. No live AWS verification
+is implied by these tests.

@@ -19,6 +19,7 @@ import (
 )
 
 type Options struct {
+	AWSProfile, AWSRegion                                *string
 	Config, Inventory, Target, Format, Timeout, StateDir string
 	DryRun                                               bool
 }
@@ -62,6 +63,17 @@ func Load(o Options) (config.Config, error) {
 			return c, errors.New("target selection contains unknown or empty IDs")
 		}
 		c.Targets = filtered
+	}
+	for i := range c.Targets {
+		if o.AWSProfile != nil {
+			c.Targets[i].Settings.AWS.Profile = o.AWSProfile
+		}
+		if o.AWSRegion != nil {
+			c.Targets[i].Settings.AWS.Region = o.AWSRegion
+		}
+		if err := config.ValidateAWS(c.Targets[i].Settings.AWS); err != nil {
+			return c, err
+		}
 	}
 	sort.Slice(c.Targets, func(i, j int) bool { return c.Targets[i].ID < c.Targets[j].ID })
 	return c, nil

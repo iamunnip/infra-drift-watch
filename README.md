@@ -79,7 +79,9 @@ Use [examples/config.yaml](examples/config.yaml) and
 [examples/inventory.yaml](examples/inventory.yaml). Precedence is built-in defaults,
 global settings, target overrides, then explicit CLI flags. Nested destination
 settings merge; lists/maps replace. Explicit false disables an inherited destination.
-Empty strings inherit; empty lists/maps clear inherited collections.
+Empty strings inherit for ordinary string settings; AWS selectors specially
+allow an explicit empty string to clear an inherited selection. Empty lists/maps
+clear inherited collections.
 
 Paths in inventory are relative to the inventory file; variable files are relative
 to the workspace. State paths are relative to the global config file unless
@@ -90,6 +92,20 @@ See [all settings](docs/diataxis/reference/configuration.md),
 [delivery setup](docs/diataxis/how-to/configure-delivery.md).
 Unknown keys, duplicate IDs, invalid durations, and unsafe API URLs are rejected.
 Credentials are referenced by environment-variable name, never stored in YAML.
+AWS profile and region are selectors, configured globally or per target:
+
+```yaml
+defaults:
+  aws:
+    profile: default
+    region: us-east-1
+```
+
+Override them for a selected run with --aws-profile and --aws-region. Omitted AWS
+selectors preserve the inherited credential/region chain; an explicit empty string
+clears inherited selector variables. GitHub Actions clears the named profile and
+uses its OIDC credentials and configured region. Credentials remain in your normal
+AWS configuration, environment, or role provider—not in these YAML settings.
 
 ## Scan history and issue closure
 

@@ -89,6 +89,7 @@ func (s Scanner) Scan(ctx context.Context, t config.Target) drift.Result {
 	if exe == "" {
 		exe = map[string]string{"opentofu": "tofu", "terraform": "terraform", "kubernetes": "kubectl"}[t.Adapter]
 	}
+	awsEnv := awsEnvironment(t.Settings.AWS)
 	if t.Adapter == "kubernetes" {
 		args := []string{"--context", t.Context}
 		if t.Namespace != "" {
@@ -102,7 +103,7 @@ func (s Scanner) Scan(ctx context.Context, t config.Target) drift.Result {
 		for _, p := range t.Manifests {
 			args = append(args, "-f", p)
 		}
-		output, code, e := run(ctx, "", exe, args, []string{"KUBECTL_EXTERNAL_DIFF=diff -U 1000000 -N"})
+		output, code, e := run(ctx, "", exe, args, append(awsEnv, "KUBECTL_EXTERNAL_DIFF=diff -U 1000000 -N"))
 		if e != nil || code > 1 || code < 0 {
 			return failed(t, "kubectl diff failed; check context, permissions, manifests and timeout")
 		}
@@ -126,7 +127,7 @@ func (s Scanner) Scan(ctx context.Context, t config.Target) drift.Result {
 	for _, p := range t.VarFiles {
 		args = append(args, "-var-file="+p)
 	}
-	env := []string{"TF_IN_AUTOMATION=1"}
+	env := append(awsEnv, "TF_IN_AUTOMATION=1")
 	if t.Workspace != "" {
 		env = append(env, "TF_WORKSPACE="+t.Workspace)
 	}
