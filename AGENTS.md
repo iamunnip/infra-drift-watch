@@ -39,7 +39,8 @@ must not disable core safety guarantees.
   Update knowledge/log.md when changing domain facts or policies.
 - docs/diataxis/: tutorials, how-to, reference, explanation.
 - docs/adr/: lasting decisions; preserve accepted history and supersede explicitly.
-- docs/arc42/: architecture narrative and C4 views using Mermaid in Markdown.
+- docs/c4/: C4 views, one Mermaid diagram and its explanation per page. Goals, principles
+  and risks live in docs/diataxis/explanation/design-and-risks.md.
 - README.md: comprehensive entry point, with implemented and planned features
   clearly distinguished.
 
