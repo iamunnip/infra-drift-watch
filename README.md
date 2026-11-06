@@ -139,8 +139,8 @@ flowchart LR
     Delivery --> State[Locked receipts and scan history]
 ```
 
-[arc42 architecture](docs/arc42/index.md) contains C4 context/building-block views
-and Mermaid runtime/deployment diagrams. [ADRs](docs/adr/index.md) record decisions.
+[C4 views](docs/c4/index.md) contain context, building-block, runtime and deployment
+diagrams; [design and risks](docs/diataxis/explanation/design-and-risks.md) explains the trade-offs. [ADRs](docs/adr/index.md) record decisions.
 
 ## Docker
 

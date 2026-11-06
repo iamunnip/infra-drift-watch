@@ -42,6 +42,9 @@ claim that planned features are implemented.
 | `docs/arc42/` | Architecture narrative, including C4 views |
 
 Use Mermaid diagrams in Markdown. C4 does not need a separate directory.
+
+Later change: [ADR 0005](../../adr/0005-drop-arc42-for-c4-and-diataxis.md) removed `docs/arc42/`
+and moved the C4 views to `docs/c4/`.
 The local `infra-vuln-watch/knowledge/` bundle is the reference for OKF layout;
 its root uses `okf_version: "0.2"`, topic indexes, typed content, and `log.md`.
 Do not copy vulnerability-specific facts into this project.

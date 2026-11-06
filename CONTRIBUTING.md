@@ -10,7 +10,7 @@ Bug fixes begin with a reproducing test. Explain the behavior change, verificati
 and documentation impact in your PR. No infrastructure credentials are needed
 for foundation tests.
 
-[Architecture](docs/arc42/index.md) and [specifications](openspec/specs/cli/spec.md)
+[Architecture views](docs/c4/index.md) and [specifications](openspec/specs/cli/spec.md)
 provide the current boundaries. Scanning and delivery clients are implemented; live account behavior remains unverified.
 See [verification](docs/diataxis/reference/verification.md) for integration prerequisites.
 

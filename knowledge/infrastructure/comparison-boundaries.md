@@ -20,4 +20,4 @@ Field paths can be derived from complete native diff hunks without publishing
 values. Unfamiliar or redacted output may retain resource/set-level findings;
 missing field detail must not be interpreted as no drift.
 
-See [architecture constraints](../../docs/arc42/02-constraints.md).
+See [design constraints](../../docs/diataxis/explanation/design-and-risks.md#constraints).
