@@ -6,12 +6,12 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 RUN CGO_ENABLED=0 go build -trimpath -o /out/infra-drift-watch ./cmd/infra-drift-watch
 
-FROM alpine:3.24.3 AS tools
+FROM alpine:3.24.4 AS tools
 RUN apk add --no-cache ca-certificates curl unzip diffutils
 COPY scripts/install-tools.sh /install-tools.sh
 RUN SKIP_TOFU=1 /install-tools.sh /tools
 
-FROM alpine:3.24.3
+FROM alpine:3.24.4
 RUN apk add --no-cache ca-certificates diffutils \
     && mkdir -p /work /state \
     && chown 65532:65532 /work /state
